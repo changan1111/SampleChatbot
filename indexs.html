@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chatbot Demo</title>
+    <style>
+        .chat-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #chat-log {
+            max-height: 500px;
+            /* Adjust the max height as needed */
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            /* Preserve line breaks in the chat log */
+        }
+
+        #chat-log .summary {
+            font-size: 16px;
+            font-style: normal;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .result-green {
+            color: green;
+        }
+
+        .result-failed {
+            color: red;
+        }
+
+        .passed {
+            color: green;
+        }
+
+        .failures {
+            color: red;
+        }
+
+        .passed-number {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-message {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .bot-message {
+            background-color: #e0e0e0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .option-button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .option-button:hover {
+            background-color: #c0c0c0;
+        }
+
+        .options-container {
+            margin-top: 10px;
+        }
+
+        .user-input {
+            display: flex;
+        }
+
+        #user-input-text {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        #send-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #45a049;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .run-test-suite-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .run-test-suite-link a {
+            color: #0000EE;
+        }
+
+        .run-test-suite-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <h1 class="chat-header">Chatbot Demo</h1>
+        <div class="welcome-text">Welcome! How can I assist you?</div>
+        <div class="welcome-text">To start execution, click!</div>
+
+        <div class="run-test-suite-link">
+            <a href="#" onclick="runTestSuite()">
+                <img src="{{ url_for('static', filename='Run-Test-Suite.jpg') }}" alt="Run Test Suite" width="100"
+                    height="100">
+            </a>
+        </div>
+
+        <div id="chat-log"></div>
+
+        <div class="user-input">
+            <input type="text" id="user-input-text" placeholder="Type your message here..." autocomplete="off">
+            <button type="button" id="send-button">Send</button>
+        </div>
+
+        <div id="options-container" class="options-container"></div>
+    </div>
+
+    <script>
+        const chatLog = document.getElementById("chat-log");
+        const userInputText = document.getElementById("user-input-text");
+        const sendButton = document.getElementById("send-button");
+        const optionsContainer = document.getElementById("options-container");
+
+        function runTestSuite() {
+            const userInput = "Run Test Suite";
+            addUserMessage(userInput);
+            sendRequest(userInput);
+        }
+
+        sendButton.addEventListener("click", sendMessage);
+        userInputText.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const userInput = userInputText.value.trim();
+            if (userInput !== "") {
+                addUserMessage(userInput);
+                userInputText.value = "";
+                sendRequest(userInput);
+            }
+        }
+
+        function addUserMessage(message) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "user-message";
+            messageDiv.textContent = message;
+            chatLog.appendChild(messageDiv);
+        }
+
+        function addBotMessage(message) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "bot-message";
+            messageDiv.innerHTML = message;
+            chatLog.appendChild(messageDiv);
+        }
+
+        function addOptionButton(option) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "option-button";
+            button.textContent = option;
+
+            let imageSrc = "";
+            if (option === "Sanity") {
+                imageSrc = "{{ url_for('static', filename='smoke-testing.jpg') }}";
+            } else if (option === "Regression") {
+                imageSrc = "{{ url_for('static', filename='regression-testing.jpg') }}";
+            } else if (option === "Security") {
+                imageSrc = "{{ url_for('static', filename='security-testing.jpg') }}";
+            } else if (option === "K2GTest") {
+                imageSrc = "{{ url_for('static', filename='K2G.jpg') }}";
+            }
+
+            // Create an image element and set its attributes
+            const image = document.createElement("img");
+            image.src = imageSrc;
+            image.alt = option;
+            image.width = 100;
+            image.height = 100;
+
+            // Append the image to the button
+            button.appendChild(image);
+
+            button.addEventListener("click", function () {
+                const selectedOption = option;
+                addUserMessage(`Selected option: ${selectedOption}`);
+                scrollToBottom();
+                sendRequest(selectedOption);
+                optionsContainer.innerHTML = ""; // Clear the options container
+            });
+            optionsContainer.appendChild(button);
+        }
+
+        function sendRequest(userInput) {
+            const formData = new FormData();
+            formData.append("user_input", userInput);
+
+            fetch("/process", {
+                method: "POST",
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const botResponse = data.bot_response;
+                    addBotMessage(botResponse);
+                    scrollToBottom();
+
+                    // Check if options are available
+                    if (botResponse.includes("Please select an option:")) {
+                        optionsContainer.innerHTML = ""; // Clear the options container
+                        const options = botResponse.split("<br/>")[1];
+                        const buttonHTML = options.trim();
+                        optionsContainer.innerHTML = buttonHTML;
+                        setupOptionButtonClicks(); // Setup click events for option buttons
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+
+        function scrollToBottom() {
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function setupOptionButtonClicks() {
+            const optionButtons = document.getElementsByClassName("option-button");
+            for (let i = 0; i < optionButtons.length; i++) {
+                optionButtons[i].addEventListener("click", function () {
+                    const selectedOption = this.textContent;
+                    addUserMessage(`Selected option: ${selectedOption}`);
+                    scrollToBottom();
+                    sendRequest(selectedOption);
+                    optionsContainer.innerHTML = ""; // Clear the options container
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

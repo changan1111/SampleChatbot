@@ -1,0 +1,150 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bot Web App</title>
+    <style>
+        <style>
+        #chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #chat-window {
+            display: none;
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: scroll;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        #messages {
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            background-color: #aaffaa;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        .bot-message {
+            background-color: #eee;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        #user-input-container {
+            display: flex;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #send-btn {
+            margin-left: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4caf50;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #message-icon {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background-color: #4caf50;
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            cursor: pointer;
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-window">
+            <div id="messages"></div>
+            <div id="user-input-container">
+                <input type="text" id="user-input" placeholder="Type your message">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+        <div id="message-icon" onclick="toggleChatWindow()">Message Icon</div>
+    </div>
+
+    <script>
+        var chatWindowOpen = false;
+        var messagesElement = document.getElementById("messages");
+        var userInputElement = document.getElementById("user-input");
+        var sendButtonElement = document.getElementById("send-btn");
+
+        function toggleChatWindow() {
+            var chatWindow = document.getElementById("chat-window");
+            if (chatWindowOpen) {
+                chatWindow.style.display = "none";
+            } else {
+                chatWindow.style.display = "block";
+                userInputElement.focus();
+            }
+            chatWindowOpen = !chatWindowOpen;
+        }
+
+        function appendMessage(message, isUser) {
+            var messageClass = isUser ? "user-message" : "bot-message";
+            var messageElement = document.createElement("div");
+            messageElement.classList.add(messageClass);
+            messageElement.innerText = message;
+            messagesElement.appendChild(messageElement);
+        }
+
+        function processUserInput() {
+            var userInput = userInputElement.value.trim();
+            if (userInput !== "") {
+                appendMessage(userInput, true);
+                userInputElement.value = "";
+
+                // Send user input to the server for processing
+                fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'user_input=' + encodeURIComponent(userInput)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var botResponse = data.bot_response;
+                    appendMessage(botResponse, false);
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                });
+            }
+        }
+
+        sendButtonElement.addEventListener("click", processUserInput);
+        userInputElement.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                processUserInput();
+            }
+        });
+    </script>
+</body>
+</html>

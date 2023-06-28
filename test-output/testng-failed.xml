@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite parallel="tests" name="Failed suite [My Test Suite]" guice-stage="DEVELOPMENT">
+  <test thread-count="5" parallel="methods" name="My Test(failed)">
+    <classes>
+      <class name="BotAutomationProject.DreamHotelSuite.SecondTest">
+        <methods>
+          <include name="DreamHotelTest1"/>
+          <include name="setup"/>
+          <include name="finalizeReport"/>
+        </methods>
+      </class> <!-- BotAutomationProject.DreamHotelSuite.SecondTest -->
+      <class name="BotAutomationProject.DreamHotelSuite.ThirdTest">
+        <methods>
+          <include name="DreamHotelTest1"/>
+          <include name="finalizeReport"/>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- BotAutomationProject.DreamHotelSuite.ThirdTest -->
+      <class name="BotAutomationProject.DreamHotelSuite.FirstTest">
+        <methods>
+          <include name="DreamHotelTest1"/>
+          <include name="setup"/>
+          <include name="finalizeReport"/>
+        </methods>
+      </class> <!-- BotAutomationProject.DreamHotelSuite.FirstTest -->
+    </classes>
+  </test> <!-- My Test(failed) -->
+</suite> <!-- Failed suite [My Test Suite] -->
