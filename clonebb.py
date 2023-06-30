@@ -87,3 +87,27 @@ def process():
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
     app.run()
+
+
+
+import subprocess
+
+def clone_repository(url, username, password, destination):
+    # Remove the existing Git configuration related to credentials
+    subprocess.run(["git", "config", "--unset", "user.name"])
+    subprocess.run(["git", "config", "--unset", "user.email"])
+    subprocess.run(["git", "config", "--unset-all", "credential.helper"])
+
+    # Set the new username and password for the repository
+    subprocess.run(["git", "config", "--global", "user.name", username])
+    subprocess.run(["git", "config", "--global", "user.password", password])
+
+    # Clone the repository with the provided credentials
+    subprocess.run(["git", "clone", url, destination])
+
+# Example usage
+url = "https://bitbucket.mycompany.com/SCM/ngbauto/mb_implementation.git"
+username = "your_username"
+password = input("Please enter your password: ")
+destination = "path/to/destination"
+clone_repository(url, username, password, destination)
