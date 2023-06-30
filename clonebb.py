@@ -61,7 +61,10 @@ def process():
 
         try:
             # Store the credentials in the credentials manager
-            subprocess.run(["git", "credential", "approve"], input=f"url={url}\nusername={username}\npassword={password}\n")
+            process = subprocess.Popen(["git", "credential", "approve"], stdin=subprocess.PIPE)
+            process.stdin.write(f"url={url}\nusername={username}\npassword={password}\n".encode())
+            process.stdin.close()
+            process.wait()
 
             # Clone the repository
             subprocess.run(["git", "clone", url, destination])
