@@ -114,33 +114,32 @@
             const inputForm = document.createElement("div");
             inputForm.className = "input-form";
             inputForm.innerHTML = `
-                <input type="password" id="user_input" autocomplete="off" placeholder="Enter password">
+                <input type="password" id="password-input" autocomplete="off" placeholder="Enter password">
                 <button type="button" id="submit-button">Submit</button>
             `;
-            const userInput = inputForm.querySelector("#user_input");
+            const passwordInput = inputForm.querySelector("#password-input");
             const submitButton = inputForm.querySelector("#submit-button");
-            userInput.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    const value = userInput.value.trim();
-                    if (value !== "") {
-                        addUserMessage("********"); // Mask the password
-                        scrollToBottom();
-                        sendRequest(value);
-                        inputForm.remove();
-                    }
-                }
-            });
-            submitButton.addEventListener("click", function() {
-                const value = userInput.value.trim();
-                if (value !== "") {
+
+            function handlePasswordSubmit() {
+                const passwordValue = passwordInput.value.trim();
+                if (passwordValue !== "") {
                     addUserMessage("********"); // Mask the password
                     scrollToBottom();
-                    sendRequest(value);
+                    sendRequest(passwordValue);
                     inputForm.remove();
                 }
+            }
+
+            passwordInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    handlePasswordSubmit();
+                }
             });
+
+            submitButton.addEventListener("click", handlePasswordSubmit);
+
             chatLog.appendChild(inputForm);
-            userInput.focus();
+            passwordInput.focus();
         }
 
         document.addEventListener("DOMContentLoaded", function() {
