@@ -1,6 +1,4 @@
-import os
 import git
-import subprocess
 from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
@@ -33,6 +31,7 @@ def index():
             try:
                 git.Repo.clone_from(url, destination)
                 branches = get_branch_list()
+                print("Branches:", branches)  # Print the branch list
                 return render_template('index.html', branches=branches, branch_selected=False)
             except git.exc.GitCommandError as e:
                 return render_template('index.html', error=str(e))
