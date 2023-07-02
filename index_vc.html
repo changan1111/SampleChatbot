@@ -1,150 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chatbot Demo</title>
+    <title>Git Repository Cloner</title>
     <style>
-        .chat-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-        
-        .user-message {
-            background-color: #f2f2f2;
-            padding: 10px;
-            margin-bottom: 10px;
+
+        h1 {
+            color: #333;
         }
-        
-        .bot-message {
-            background-color: #e0e0e0;
-            padding: 10px;
-            margin-bottom: 10px;
+
+        form {
+            margin-bottom: 20px;
         }
-        
-        .option-button {
-            padding: 10px 20px;
-            margin: 5px;
-            background-color: #e0e0e0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
+
+        label {
             display: inline-block;
+            width: 100px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
-        
-        .option-button:hover {
-            background-color: #c0c0c0;
-        }
-        
-        .input-form {
-            margin-top: 10px;
-        }
-        
-        .input-form input {
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 300px;
             padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <h1>Chatbot Demo</h1>
-        <div id="chat-log"></div>
-        <div id="user-input">
-            <a href="#" class="option-button" data-option="Clone Repository">Clone Repository</a>
-        </div>
-    </div>
+    <h1>Git Repository Cloner</h1>
 
-    <script>
-        const chatLog = document.getElementById("chat-log");
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
 
-        function addUserMessage(message) {
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "user-message";
-            messageDiv.textContent = message;
-            chatLog.appendChild(messageDiv);
-        }
+    <h2>Clone Repository</h2>
+    <form method="POST" action="/">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br>
 
-        function addBotMessage(message) {
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "bot-message";
-            messageDiv.innerHTML = message;
-            chatLog.appendChild(messageDiv);
-        }
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
 
-        function sendRequest(userInput) {
-            const formData = new FormData();
-            formData.append("user_input", userInput);
+        <label for="repository">Repository:</label>
+        <input type="text" id="repository" name="repository" required><br>
 
-            fetch("/process", {
-                method: "POST",
-                body: formData,
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const botResponse = data.bot_response;
-                    addBotMessage(botResponse);
-                    scrollToBottom();
-                    setupOptionButtonClicks();
-                    setupInputFormSubmit();
-                })
-                .catch(error => console.error(error));
-        }
+        <label for="destination">Destination Path:</label>
+        <input type="text" id="destination" name="destination" required><br>
 
-        function setupOptionButtonClicks() {
-            const optionButtons = document.getElementsByClassName("option-button");
-            for (let i = 0; i < optionButtons.length; i++) {
-                optionButtons[i].addEventListener("click", function() {
-                    const selectedOption = this.getAttribute("data-option");
-                    addUserMessage(`Selected option: ${selectedOption}`);
-                    scrollToBottom();
-                    if (selectedOption === "Clone Repository") {
-                        sendRequest(selectedOption);
-                    }
-                });
-            }
-        }
+        <input type="submit" name="user_input" value="Clone Repository">
+    </form>
 
-        function scrollToBottom() {
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
+    {% if branches %}
+        <h2>Select Branch</h2>
+        <form method="POST" action="/">
+            <select name="branch">
+                {% for branch in branches %}
+                    <option value="{{ branch.name }}">{{ branch.display_name }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" name="user_input" value="Checkout Branch">
+        </form>
+    {% endif %}
 
-        function setupInputFormSubmit() {
-            const inputForm = document.createElement("div");
-            inputForm.className = "input-form";
-            inputForm.innerHTML = `
-                <input type="password" id="password-input" autocomplete="off" placeholder="Enter password">
-                <button type="button" id="submit-button">Submit</button>
-            `;
-            const passwordInput = inputForm.querySelector("#password-input");
-            const submitButton = inputForm.querySelector("#submit-button");
-
-            function handlePasswordSubmit() {
-                const passwordValue = passwordInput.value.trim();
-                if (passwordValue !== "") {
-                    addUserMessage("********"); // Mask the password
-                    scrollToBottom();
-                    sendRequest(passwordValue);
-                    inputForm.remove();
-                }
-            }
-
-            passwordInput.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    handlePasswordSubmit();
-                }
-            });
-
-            submitButton.addEventListener("click", handlePasswordSubmit);
-
-            chatLog.appendChild(inputForm);
-            passwordInput.focus();
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            setupOptionButtonClicks();
-        });
-    </script>
 </body>
 </html>
