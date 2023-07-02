@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bitbucket Checkout</title>
+</head>
+<body>
+    <h1>Bitbucket Checkout</h1>
+
+    {% if error %}
+    <p style="color: red;">Error: {{ error }}</p>
+    {% endif %}
+
+    <form action="/" method="post">
+        <h2>Clone Repository</h2>
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required><br><br>
+        <label for="repository">Repository:</label>
+        <input type="text" name="repository" id="repository" required><br><br>
+        <label for="destination">Destination:</label>
+        <input type="text" name="destination" id="destination" required><br><br>
+        <input type="submit" name="user_input" value="Clone Repository">
+    </form>
+
+    {% if branches %}
+    <form action="/" method="post">
+        <h2>Select Branch</h2>
+        <label for="branch">Branch:</label>
+        <select name="branch" id="branch">
+            {% for branch in branches %}
+            <option value="{{ branch }}">{{ branch }}</option>
+            {% endfor %}
+        </select><br><br>
+        <input type="submit" name="user_input" value="Checkout Branch">
+    </form>
+    {% endif %}
+    
+    {% if branch_selected %}
+    <h2>Selected Branch: {{ branch }}</h2>
+    <h2>Select City</h2>
+    <form action="/" method="post">
+        <label for="city">City:</label>
+        <select name="city" id="city">
+            {% for city in cities %}
+            <option value="{{ city }}" {% if city == 'Main City' %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+        </select><br><br>
+        <input type="submit" name="user_input" value="Update Main City">
+    </form>
+    {% endif %}
+</body>
+</html>
