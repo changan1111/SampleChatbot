@@ -12,7 +12,7 @@ branch = ""
 
 def get_branch_list():
     repo = git.Repo(destination)
-    branches = [b.name for b in repo.branches]
+    branches = [{'name': b.name, 'display_name': b.name.split('/')[-1]} for b in repo.branches]
     return branches
 
 @app.route('/', methods=['GET', 'POST'])
@@ -41,11 +41,13 @@ def index():
             try:
                 repo = git.Repo(destination)
                 repo.git.checkout(branch)
-                return render_template('index.html', branches=get_branch_list(), branch_selected=True)
+                branches = get_branch_list()
+                return render_template('index.html', branches=branches, branch_selected=True)
             except git.exc.GitCommandError as e:
-                return render_template('index.html', branches=get_branch_list(), branch_selected=False, error=str(e))
+                return render_template('index.html', branches=branches, branch_selected=False, error=str(e))
     
-    return render_template('index.html', branches=[], branch_selected=False)
+    branches = get_branch_list()
+    return render_template('index.html', branches=branches, branch_selected=False)
 
 if __name__ == '__main__':
     app.run()
