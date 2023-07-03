@@ -47,7 +47,12 @@ def process():
     elif session.get('current_step') == 'destination':
         destination = user_input
         session['current_step'] = 'branch'
-        bot_response = "Please enter the branch name:"
+        bot_response = "Fetching branches..."
+        branches = get_branches(destination)
+        print("Branches:")
+        for branch in branches:
+            print(branch)
+        return jsonify({'bot_response': bot_response, 'branches': branches})
     elif session.get('current_step') == 'branch':
         branch = user_input
         session['current_step'] = None
@@ -91,6 +96,17 @@ def process():
             bot_response = f"Error checking out branch: {e}"
 
     return jsonify({'bot_response': bot_response})
+
+def get_branches(destination):
+    try:
+        # Fetch the branches using Git command
+        output = subprocess.check_output(["git", "-C", destination, "branch", "--list"]).decode().strip()
+        branches = output.split('\n')
+        branches = [branch.strip() for branch in branches]
+        return branches
+    except subprocess.CalledProcessError as e:
+        print(f"Error fetching branches: {e}")
+        return []
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
