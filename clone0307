@@ -34,10 +34,6 @@ def process():
     perform_checkout = False  # Initialize perform_checkout variable
 
     if request.form.get('clone'):
-        session['current_step'] = 'username'
-        bot_response = "Please enter your username:"
-    elif session.get('current_step') == 'username':
-        username = user_input
         session['current_step'] = 'repository'
         bot_response = "Please enter the repository name:"
     elif session.get('current_step') == 'repository':
@@ -47,7 +43,7 @@ def process():
     elif session.get('current_step') == 'destination':
         destination = user_input
         session['current_step'] = 'branch'
-        bot_response = "Please enter the branch name:"
+        bot_response = "Fetching branches..."
     elif session.get('current_step') == 'branch':
         branch = user_input
         session['current_step'] = None
@@ -95,10 +91,10 @@ def process():
 @app.route('/branches', methods=['GET'])
 def get_branches():
     if session.get('current_step') == 'branch':
-        repo_path = f"{destination}/{repository}"
-        process = subprocess.Popen(["git", "-C", repo_path, "branch", "--list", "--remote"], stdout=subprocess.PIPE)
+        url = f"https://bitbucket.mycompany.com/{username}/{repository}.git"
+        process = subprocess.Popen(["git", "ls-remote", "--heads", url], stdout=subprocess.PIPE)
         output, _ = process.communicate()
-        branches = [branch.strip() for branch in output.decode().split("\n") if branch.strip()]
+        branches = [branch.strip().split("refs/heads/")[-1] for branch in output.decode().split("\n") if branch.strip().startswith("refs/heads/")]
         return jsonify({'branches': branches})
     else:
         return jsonify({'branches': []})
