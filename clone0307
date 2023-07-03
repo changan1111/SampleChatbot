@@ -20,10 +20,9 @@ def index():
     elif session.get('current_step') == 'username':
         bot_response = "Please enter your username:"
     else:
-        bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
+        bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' name='clone' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
 
-    branches = get_branch_list()  # Fetch the branch list
-    return render_template('index.html', bot_response=bot_response, branches=branches)
+    return render_template('index.html', bot_response=bot_response)
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -32,8 +31,9 @@ def process():
     user_input = request.form['user_input']
 
     perform_clone = False  # Initialize perform_clone variable
+    perform_checkout = False  # Initialize perform_checkout variable
 
-    if user_input == "Clone Repository":
+    if request.form.get('clone'):
         session['current_step'] = 'username'
         bot_response = "Please enter your username:"
     elif session.get('current_step') == 'username':
@@ -70,9 +70,8 @@ def process():
             # Clone the repository
             subprocess.run(["git", "clone", url, destination])
 
-            # Checkout the specified branch
-            subprocess.run(["git", "-C", destination, "checkout", branch])
-
+            # Set perform_checkout to True to initiate the checkout process
+            perform_checkout = True
             bot_response = "Repository cloned successfully."
         except subprocess.CalledProcessError as e:
             bot_response = f"Error cloning repository: {e}"
@@ -83,20 +82,15 @@ def process():
         destination = ""
         branch = ""
 
-    branches = get_branch_list()  # Fetch the updated branch list
-    return jsonify({'bot_response': bot_response, 'branches': branches})
+    if perform_checkout:
+        try:
+            # Checkout the specified branch
+            subprocess.run(["git", "-C", destination, "checkout", branch])
+            bot_response = "Repository cloned successfully and checked out to the selected branch."
+        except subprocess.CalledProcessError as e:
+            bot_response = f"Error checking out branch: {e}"
 
-def get_branch_list():
-    branches = []
-
-    try:
-        process = subprocess.run(["git", "-C", destination, "branch", "--list"], capture_output=True, text=True)
-        output = process.stdout.strip()
-        branches = output.split('\n')
-    except subprocess.CalledProcessError as e:
-        print(f"Error fetching branch list: {e}")
-
-    return branches
+    return jsonify({'bot_response': bot_response})
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
