@@ -20,7 +20,7 @@ def index():
     elif session.get('current_step') == 'username':
         bot_response = "Please enter your username:"
     else:
-        bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' name='clone' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
+        bot_response = render_template('options.html')
 
     return render_template('index.html', bot_response=bot_response)
 
@@ -33,7 +33,7 @@ def process():
     perform_clone = False  # Initialize perform_clone variable
     perform_checkout = False  # Initialize perform_checkout variable
 
-    if request.form.get('clone'):
+    if user_input == "Clone Repository":
         session['current_step'] = 'username'
         bot_response = "Please enter your username:"
     elif session.get('current_step') == 'username':
@@ -47,12 +47,7 @@ def process():
     elif session.get('current_step') == 'destination':
         destination = user_input
         session['current_step'] = 'branch'
-        bot_response = "Fetching branches..."
-        branches = get_branches(destination)
-        print("Branches:")
-        for branch in branches:
-            print(branch)
-        return jsonify({'bot_response': bot_response, 'branches': branches})
+        bot_response = "Please enter the branch name:"
     elif session.get('current_step') == 'branch':
         branch = user_input
         session['current_step'] = None
@@ -96,17 +91,6 @@ def process():
             bot_response = f"Error checking out branch: {e}"
 
     return jsonify({'bot_response': bot_response})
-
-def get_branches(destination):
-    try:
-        # Fetch the branches using Git command
-        output = subprocess.check_output(["git", "-C", destination, "branch", "--list"]).decode().strip()
-        branches = output.split('\n')
-        branches = [branch.strip() for branch in branches]
-        return branches
-    except subprocess.CalledProcessError as e:
-        print(f"Error fetching branches: {e}")
-        return []
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
