@@ -11,41 +11,16 @@ branch = ""
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if session.get('current_step') == 'destination':
-        # Get the branches
-        repo_path = f"{destination}/{repository}"
-        try:
-            process = subprocess.run(["git", "-C", repo_path, "branch", "-r"], capture_output=True, text=True)
-            branches_output = process.stdout.strip()
-
-            # Process the branch output and extract branch names starting with "AAA"
-            branches = []
-            for branch in branches_output.split("\n"):
-                branch = branch.strip()
-                if branch.startswith("origin/AAA"):
-                    branches.append(branch.replace("origin/", ""))
-
-            if branches:
-                bot_response = "Please select a branch to checkout:"
-                return render_template('index.html', bot_response=bot_response, branches=branches)
-            else:
-                bot_response = "No branches found."
-                return render_template('index.html', bot_response=bot_response)
-        except subprocess.CalledProcessError as e:
-            bot_response = f"Error fetching branches: {e}"
-            return render_template('index.html', bot_response=bot_response)
-    elif session.get('current_step') == 'branch':
-        bot_response = "Please enter the branch name:"
-        return render_template('index.html', bot_response=bot_response)
-    elif session.get('current_step') == 'username':
-        bot_response = "Please enter your username:"
-        return render_template('index.html', bot_response=bot_response)
-    elif session.get('current_step') == 'repository':
+    if session.get('current_step') == 'repository':
         bot_response = "Please enter the repository name:"
-        return render_template('index.html', bot_response=bot_response)
+    elif session.get('current_step') == 'destination':
+        bot_response = "Please enter the destination path:"
+    elif session.get('current_step') == 'branch':
+        bot_response = get_branches()
     else:
         bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' name='clone' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
-        return render_template('index.html', bot_response=bot_response)
+
+    return render_template('index.html', bot_response=bot_response)
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -54,13 +29,8 @@ def process():
     user_input = request.form['user_input']
 
     perform_clone = False  # Initialize perform_clone variable
-    perform_checkout = False  # Initialize perform_checkout variable
 
     if request.form.get('clone'):
-        session['current_step'] = 'username'
-        bot_response = "Please enter your username:"
-    elif session.get('current_step') == 'username':
-        username = user_input
         session['current_step'] = 'repository'
         bot_response = "Please enter the repository name:"
     elif session.get('current_step') == 'repository':
@@ -69,13 +39,12 @@ def process():
         bot_response = "Please enter the destination path:"
     elif session.get('current_step') == 'destination':
         destination = user_input
-        session['current_step'] = 'branch'
-        bot_response = "Fetching branches..."
+        perform_clone = True
+        bot_response = "Cloning repository..."
     elif session.get('current_step') == 'branch':
         branch = user_input
         session['current_step'] = None
-        perform_clone = True
-        bot_response = "Cloning repository..."
+        bot_response = "Checked out to branch: " + branch
     else:
         bot_response = "Invalid command. Please try again."
 
@@ -91,11 +60,10 @@ def process():
             process.wait()
 
             # Clone the repository
-            subprocess.run(["git", "clone", url, destination])
+            subprocess.run(["git", "clone", url, destination], check=True)
 
-            # Set perform_checkout to True to initiate the checkout process
-            perform_checkout = True
-            bot_response = "Repository cloned successfully."
+            session['current_step'] = 'branch'
+            bot_response = get_branches()
         except subprocess.CalledProcessError as e:
             bot_response = f"Error cloning repository: {e}"
 
@@ -105,15 +73,21 @@ def process():
         destination = ""
         branch = ""
 
-    if perform_checkout:
-        try:
-            # Checkout the specified branch
-            subprocess.run(["git", "-C", destination, "checkout", branch])
-            bot_response = "Repository cloned successfully and checked out to the selected branch."
-        except subprocess.CalledProcessError as e:
-            bot_response = f"Error checking out branch: {e}"
-
     return jsonify({'bot_response': bot_response})
+
+def get_branches():
+    repo_path = f"{destination}/{repository}/.git"
+    try:
+        # Fetch the branches from the cloned repository
+        process = subprocess.run(["git", "branch", "--list", "--remote"], cwd=repo_path, capture_output=True, text=True)
+        output = process.stdout
+        branches = [branch.strip() for branch in output.split("\n") if branch.strip()]
+        branch_links = [f'<a href="#" onclick="sendOption(\'Checkout {b[7:]}\')">{b[7:]}</a>' for b in branches if b.startswith('origin/AAA')]
+        if not branch_links:
+            return "No branches found."
+        return "<br/>".join(branch_links)
+    except subprocess.CalledProcessError as e:
+        return f"Error fetching branches: {e}"
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
