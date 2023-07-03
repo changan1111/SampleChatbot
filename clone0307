@@ -20,7 +20,7 @@ def index():
     elif session.get('current_step') == 'username':
         bot_response = "Please enter your username:"
     else:
-        bot_response = render_template('options.html')
+        bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' name='clone' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
 
     return render_template('index.html', bot_response=bot_response)
 
@@ -33,7 +33,7 @@ def process():
     perform_clone = False  # Initialize perform_clone variable
     perform_checkout = False  # Initialize perform_checkout variable
 
-    if user_input == "Clone Repository":
+    if request.form.get('clone'):
         session['current_step'] = 'username'
         bot_response = "Please enter your username:"
     elif session.get('current_step') == 'username':
@@ -91,6 +91,17 @@ def process():
             bot_response = f"Error checking out branch: {e}"
 
     return jsonify({'bot_response': bot_response})
+
+@app.route('/branches', methods=['GET'])
+def get_branches():
+    if session.get('current_step') == 'branch':
+        repo_path = f"{destination}/{repository}"
+        process = subprocess.Popen(["git", "-C", repo_path, "branch", "--list", "--remote"], stdout=subprocess.PIPE)
+        output, _ = process.communicate()
+        branches = [branch.strip() for branch in output.decode().split("\n") if branch.strip()]
+        return jsonify({'branches': branches})
+    else:
+        return jsonify({'branches': []})
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
