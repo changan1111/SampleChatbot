@@ -7,7 +7,6 @@ app = Flask(__name__)
 username = ""
 repository = ""
 destination = ""
-project_name = ""
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -15,8 +14,8 @@ def index():
         bot_response = "Please enter the repository name:"
     elif session.get('current_step') == 'destination':
         bot_response = "Please enter the destination path:"
-    elif session.get('current_step') == 'project_name':
-        bot_response = get_branches(project_name)
+    elif session.get('current_step') == 'branch':
+        bot_response = get_branches(session.get('project_name'))
     else:
         bot_response = "Welcome! Please enter a command or select an option:<br/><button type='button' class='option-button' name='clone' onclick='sendOption(\"Clone Repository\")'>Clone Repository</button>"
 
@@ -24,7 +23,7 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process():
-    global username, repository, destination, project_name
+    global username, repository, destination
 
     user_input = request.form['user_input']
 
@@ -39,16 +38,11 @@ def process():
         bot_response = "Please enter the destination path:"
     elif session.get('current_step') == 'destination':
         destination = user_input
-        session['current_step'] = 'project_name'
-        bot_response = "Please enter the project name:"
-    elif session.get('current_step') == 'project_name':
-        project_name = user_input
         perform_clone = True
         bot_response = "Cloning repository..."
     elif session.get('current_step') == 'branch':
         session['current_step'] = None
         bot_response = "Checked out to branch: " + user_input
-        bot_response += get_branches()
     else:
         bot_response = "Invalid command. Please try again."
 
@@ -67,7 +61,8 @@ def process():
             subprocess.run(["git", "clone", url, destination], check=True)
 
             session['current_step'] = 'branch'
-            bot_response = "Cloned repository. Please enter the branch name:"
+            session['project_name'] = repository  # Store the project name
+            bot_response = get_branches(session['project_name'])
         except subprocess.CalledProcessError as e:
             bot_response = f"Error cloning repository: {e}"
 
@@ -75,21 +70,20 @@ def process():
         username = ""
         repository = ""
         destination = ""
-        project_name = ""
 
     return jsonify({'bot_response': bot_response})
 
-def get_branches():
+def get_branches(project_name):
     repo_path = f"{destination}/{repository}/.git"
     try:
         # Fetch the branches from the cloned repository
         process = subprocess.run(["git", "branch", "--list", "--remote"], cwd=repo_path, capture_output=True, text=True)
         output = process.stdout
         branches = [branch.strip() for branch in output.split("\n") if branch.strip()]
-        branch_links = [f'<a href="#" onclick="sendOption(\'Checkout {b[7:]}\')">{b[7:]}</a>' for b in branches if b.startswith(f'origin/{project_name}/')]
-        if not branch_links:
+        branch_buttons = [f'<button type="button" class="option-button" onclick="sendOption(\'Checkout {b[7:]}\')">{b[7:]}</button>' for b in branches if b.startswith(f'origin/{project_name}/')]
+        if not branch_buttons:
             return "No branches found."
-        return "<br/>".join(branch_links)
+        return branch_buttons
     except subprocess.CalledProcessError as e:
         return f"Error fetching branches: {e}"
 
