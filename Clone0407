@@ -43,6 +43,7 @@ def process():
     elif session.get('current_step') == 'branch':
         session['current_step'] = None
         bot_response = "Checked out to branch: " + user_input
+        checkout_branch(session.get('project_name'), user_input)
     else:
         bot_response = "Invalid command. Please try again."
 
@@ -80,12 +81,20 @@ def get_branches(project_name):
         process = subprocess.run(["git", "branch", "--list", "--remote"], cwd=repo_path, capture_output=True, text=True)
         output = process.stdout
         branches = [branch.strip() for branch in output.split("\n") if branch.strip()]
-        branch_buttons = [f'<button type="button" class="option-button" onclick="sendOption(\'Checkout {b[7:]}\')">{b[7:]}</button>' for b in branches if b.startswith(f'origin/{project_name}/')]
-        if not branch_buttons:
+        branch_links = [f'<a href="#" onclick="checkoutBranch(\'{b[7:]}\')">{b[7:]}</a>' for b in branches if b.startswith(f'origin/{project_name}/')]
+        if not branch_links:
             return "No branches found."
-        return branch_buttons
+        return "<br/>".join(branch_links)
     except subprocess.CalledProcessError as e:
         return f"Error fetching branches: {e}"
+
+def checkout_branch(project_name, branch_name):
+    repo_path = f"{destination}/{repository}"
+    try:
+        # Checkout the selected branch
+        subprocess.run(["git", "checkout", "-b", branch_name, f"origin/{project_name}/{branch_name}"], cwd=repo_path, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error checking out branch: {e}")
 
 if __name__ == '__main__':
     app.secret_key = 'your_secret_key'
