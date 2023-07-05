@@ -14,6 +14,8 @@ def index():
         bot_response = "Please enter the repository name:"
     elif session.get('current_step') == 'destination':
         bot_response = "Please enter the destination path:"
+    elif session.get('current_step') == 'project':
+        bot_response = "Please enter the project name:"
     elif session.get('current_step') == 'branch':
         bot_response = get_branches(session.get('project_name'))
     else:
@@ -40,6 +42,10 @@ def process():
         destination = user_input
         perform_clone = True
         bot_response = "Cloning repository..."
+    elif session.get('current_step') == 'project':
+        session['project_name'] = user_input
+        session['current_step'] = 'branch'
+        bot_response = get_branches(session.get('project_name'))
     elif session.get('current_step') == 'branch':
         session['current_step'] = None
         checkout_branch(user_input)
@@ -61,9 +67,8 @@ def process():
             # Clone the repository
             subprocess.run(["git", "clone", url, destination], check=True)
 
-            session['current_step'] = 'branch'
-            session['project_name'] = repository  # Store the project name
-            bot_response = get_branches(session['project_name'])
+            session['current_step'] = 'project'
+            bot_response = "Please enter the project name:"
         except subprocess.CalledProcessError as e:
             bot_response = f"Error cloning repository: {e}"
 
@@ -81,7 +86,7 @@ def get_branches(project_name):
         process = subprocess.run(["git", "branch", "--list", "--remote"], cwd=repo_path, capture_output=True, text=True)
         output = process.stdout
         branches = [branch.strip() for branch in output.split("\n") if branch.strip()]
-        branch_links = [f'<a href="#" onclick="checkoutBranch(\'{b[7:]}\')">{b[7:]}</a>' for b in branches if b.startswith(f'origin/{project_name}/')]
+        branch_links = [b for b in branches if b.startswith(f'origin/{project_name}/')]
         if not branch_links:
             return "No branches found."
         return "<br/>".join(branch_links)
@@ -92,7 +97,7 @@ def checkout_branch(branch_name):
     repo_path = f"{destination}/{repository}"
     try:
         # Checkout the selected branch
-        subprocess.run(["git", "checkout", branch_name], cwd=repo_path, check=True)
+        subprocess.run(["git", "checkout", "-b", branch_name, f"origin/{branch_name}"], cwd=repo_path, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error checking out branch: {e}")
 
