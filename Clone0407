@@ -42,8 +42,8 @@ def process():
         bot_response = "Cloning repository..."
     elif session.get('current_step') == 'branch':
         session['current_step'] = None
-        bot_response = "Checked out to branch: " + user_input
-        checkout_branch(session.get('project_name'), user_input)
+        checkout_branch(user_input)
+        bot_response = "Checked out branch: " + user_input
     else:
         bot_response = "Invalid command. Please try again."
 
@@ -88,11 +88,11 @@ def get_branches(project_name):
     except subprocess.CalledProcessError as e:
         return f"Error fetching branches: {e}"
 
-def checkout_branch(project_name, branch_name):
+def checkout_branch(branch_name):
     repo_path = f"{destination}/{repository}"
     try:
         # Checkout the selected branch
-        subprocess.run(["git", "checkout", "-b", branch_name, f"origin/{project_name}/{branch_name}"], cwd=repo_path, check=True)
+        subprocess.run(["git", "checkout", branch_name], cwd=repo_path, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error checking out branch: {e}")
 
